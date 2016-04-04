@@ -224,19 +224,8 @@ static void mei_cl_bus_event_work(struct work_struct *work)
 
 	cldev = container_of(work, struct mei_cl_device, event_work);
 
-	bus = cldev->bus;
-
 	if (cldev->event_cb)
 		cldev->event_cb(cldev, cldev->events, cldev->event_context);
-
-	cldev->events = 0;
-
-	/* Prepare for the next read */
-	if (cldev->events_mask & BIT(MEI_CL_EVENT_RX)) {
-		mutex_lock(&bus->device_lock);
-		mei_cl_read_start(cldev->cl, 0, NULL);
-		mutex_unlock(&bus->device_lock);
-	}
 }
 
 /**
@@ -280,6 +269,7 @@ bool mei_cl_bus_notify_event(struct mei_cl *cl)
 bool mei_cl_bus_rx_event(struct mei_cl *cl)
 {
 	struct mei_cl_device *cldev = cl->cldev;
+	struct mei_device *bus = cldev->bus;
 
 	if (!cldev || !cldev->event_cb)
 		return false;
@@ -290,6 +280,13 @@ bool mei_cl_bus_rx_event(struct mei_cl *cl)
 	set_bit(MEI_CL_EVENT_RX, &cldev->events);
 
 	schedule_work(&cldev->event_work);
+
+	/* Prepare for the next read */
+	if (cldev->events_mask & BIT(MEI_CL_EVENT_RX)) {
+		mutex_lock(&bus->device_lock);
+		mei_cl_read_start(cldev->cl, 0, NULL);
+		mutex_unlock(&bus->device_lock);
+	}
 
 	return true;
 }
