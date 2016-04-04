@@ -1060,7 +1060,7 @@ validate_exec_list(struct drm_device *dev,
 	return 0;
 }
 
-static struct intel_context *
+struct intel_context *
 i915_gem_validate_context(struct drm_device *dev, struct drm_file *file,
 			  struct intel_engine_cs *ring, const u32 ctx_id)
 {
