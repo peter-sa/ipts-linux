@@ -352,7 +352,7 @@ static void itouch_object_unmap(struct itouch_object* obj)
 
 static struct itouch_client_ctx* itouch_create_client_context(void)
 {
-	struct drm_i915_gem_context_create args;
+	struct drm_i915_gem_context_create args = {0};
 	struct itouch_client_ctx* client_ctx;
 	struct intel_context *touch_hw_ctx;
 	struct drm_i915_private *dev_priv = g_touch_ctx->dev->dev_private;
