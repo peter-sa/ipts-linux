@@ -216,7 +216,7 @@ int hid_state_handler(struct itouch_device *idv)
 int graphics_state_handler(struct itouch_device *idv)
 {
 	void *kernelspec = NULL;
-	int size = 0, ret;
+	int size = 0, ret = 0;
 	const char *kernel_path;
 
 	if (idv->graphics_state.comp_state == GFX_STATE_NONE) {
