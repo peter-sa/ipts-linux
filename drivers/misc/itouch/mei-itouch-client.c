@@ -336,16 +336,13 @@ static int mei_cl_itouch_init(void)
 
 	result = mei_cldev_driver_register(&itouch_mei_cl_driver);
 	if (result) {
-		goto err_unreg;
+		pr_err("Error in Registering ITouch client with MEI\n");
+		return result;
 	}
 
 	pr_info("Intel iTouch:  %s() completed\n",__func__);
-	return 0;
 
-err_unreg:
-	mei_cldev_driver_unregister(&itouch_mei_cl_driver);
-	pr_err("Error in Registering ITouch client with MEI\n");
-	return result;
+	return 0;
 }
 
 static void __exit mei_cl_itouch_exit(void)
