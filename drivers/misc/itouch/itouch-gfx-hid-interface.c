@@ -37,16 +37,20 @@ static int itouch_register(struct itouch_device *idv,
 	ctx->dev = idv;
 
 	ret = i915_itouch_client_register(&(ctx->clbks));
-	if (ret) {
-		if (ctx->clbks.gfx_version != ctx->clbks.hid_version) {
-			itouch_dbg(idv, "gfx/hid header version mismatch, return value=%d\n",ret);
-			itouch_dbg(idv, "ctx->clbks.gfxVersion=%d--- ctx->clbks.hidVersion=%d\n",
-				ctx->clbks.gfx_version, ctx->clbks.hid_version);
-		} else if (!ctx->clbks.gfx_handle) {
-			itouch_dbg(idv, "didn't receive the Gfx Context, return value=%d\n",ret);
-		} else if (ctx->clbks.i915_ops.map_buffer == NULL) {
-			itouch_dbg(idv, "didn't receive the Gfx Context, return value=%d\n",ret);
-		}
+	if (ret)
+		return ret;
+
+	if (ctx->clbks.gfx_version != ctx->clbks.hid_version) {
+		itouch_dbg(idv, "gfx/hid header version mismatch, return value=%d\n",ret);
+		itouch_dbg(idv, "ctx->clbks.gfxVersion=%d--- ctx->clbks.hidVersion=%d\n",
+			ctx->clbks.gfx_version, ctx->clbks.hid_version);
+		return -ENXIO;
+	} else if (!ctx->clbks.gfx_handle) {
+		itouch_dbg(idv, "didn't receive the Gfx Context, return value=%d\n",ret);
+		return -ENXIO;
+	} else if (ctx->clbks.i915_ops.map_buffer == NULL) {
+		itouch_dbg(idv, "didn't receive the Gfx Context, return value=%d\n",ret);
+		return -ENXIO;
 	}
 
 	/* Save the i915 gfx ops */

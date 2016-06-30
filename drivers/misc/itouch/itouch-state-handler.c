@@ -115,11 +115,7 @@ int me_state_handler(struct itouch_device *idv)
 			itouch_dbg(idv, "Failed to reset itouch mei hw\n");
 			idv->me_state.comp_state = ME_MEI_RESET_ERROR;
 			idv->me_state.error_status = true;
-
-			return status;
 		}
-		return status;
-
 	} else if (idv->me_state.comp_state == ME_MEI_INT_READY ) {
 
 		status = sensor_mode_handler(idv);
@@ -140,7 +136,7 @@ int me_state_handler(struct itouch_device *idv)
 
 			itouch_dbg(idv,"GFX State is GFX_DETECTED\n");
 			idv->graphics_state.comp_state = GFX_DETECTED;
-			graphics_state_handler(idv);
+			status = graphics_state_handler(idv);
 
 		}else if (idv->sensor_mode == TOUCH_SENSOR_MODE_HID) {
 
@@ -149,7 +145,6 @@ int me_state_handler(struct itouch_device *idv)
 				if (status != 0) {
 					idv->me_state.comp_state = ME_MEI_SET_MEM_ERROR;
 					idv->me_state.error_status = true;
-					return status;
 				}
 			}
 		}
