@@ -66,6 +66,7 @@ void itouch_signal_complete(HANDLE ctx, u32 id)
 		idv = (struct itouch_device *)(context->dev);
 	} else {
 		itouch_dbg(idv, "GUC Signal received but context is invalid\n");
+		return;
 	}
 
 	guc_processdesc =
@@ -109,6 +110,7 @@ void itouch_display_on_off(HANDLE ctx, bool enable)
 	} else {
 		itouch_dbg(idv,
 			"Display Signal received but context is invalid\n");
+		return;
 	}
 
 	if(enable)
