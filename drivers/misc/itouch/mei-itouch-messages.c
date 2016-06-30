@@ -765,7 +765,8 @@ int parse_touch_sensor_get_device_info_rsp_data(struct itouch_device *idv,
 					idv->sensor_data.MaxTouchPoints);
 
 		idv->me_state.comp_state = ME_MEI_GET_DEVICE_INFO_RECEIVED;
-		status = 0;
+		/* FIXME: do this in itouch_mei_cl_probe, here for sensor_data */
+		status = mei_hid_probe(idv);
 	}
 
 	return status;

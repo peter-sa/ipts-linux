@@ -139,19 +139,13 @@ void itouch_stop(struct itouch_device *idv)
     touch_device_mei_disconnect(idv);
 }
 
-/*This function gets called during the init stages and
- *when the MultiTouch events are obtained, triggered at
- *touch_signal_complete().
-*/
+/*This function gets called when the MultiTouch events
+ *are obtained, triggered at *touch_signal_complete().
+ */
 void multi_touch_work(struct work_struct *work)
 {
    struct itouch_device *idv = container_of(work,
                         struct itouch_device, multi_touch_work);
-
-    if(idv->driver_state.comp_state == DRIVER_HW_INIT){
-        driver_state_handler(idv);
-        return;
-    }
 
     mutex_lock(&multi_touch_mutex);
 
@@ -176,7 +170,10 @@ void reacquire_guc_db(struct work_struct *work)
 	struct itouch_device *idv = container_of(to_delayed_work(work),
 			struct itouch_device, reacquire_db_work);
 
-	BUG_ON(idv->appPrcocessParams == NULL);
+	if (!idv->appPrcocessParams) {
+		itouch_dbg(idv, "appPrcocessParams is NULL, BUG\n");
+		goto sched;
+	}
 
 	head = idv->appPrcocessParams->head;
 	tail = idv->appPrcocessParams->tail;
@@ -191,6 +188,7 @@ void reacquire_guc_db(struct work_struct *work)
 		itouch_reacquire_guc_db();
 	}
 
+sched:
 	/*Re-schedule the work only if the display is on*/
 	if(idv->display_status)
 		schedule_delayed_work(&idv->reacquire_db_work,
@@ -272,13 +270,6 @@ int itouch_mei_cl_probe(struct mei_cl_device *dev,
 	idv->dev = &dev->dev;
 	mutex_init(&event_handler);
 	mutex_init(&multi_touch_mutex);
-	ret = mei_hid_probe(idv);
-
-	if(ret != 0)
-		goto err;
-
-	if(itouch_dbgfs_register(idv, "itouch"))
-		itouch_dbg(idv, "cannot register debugfs\n");
 
 	INIT_WORK(&idv->multi_touch_work, multi_touch_work);
 	INIT_DELAYED_WORK(&idv->reacquire_db_work, reacquire_guc_db);
@@ -286,21 +277,29 @@ int itouch_mei_cl_probe(struct mei_cl_device *dev,
 
 	/*we set display status on during init*/
 	idv->display_status = true;
-	/*Schedule the work, so that the state machine starts*/
-	schedule_work(&idv->multi_touch_work);
-	schedule_delayed_work(&idv->reacquire_db_work,
-						REACQUIRE_DB_WORK_DELAY*2);
 
-	if( ret < 0){
+	idv->driver_state.comp_state = DRIVER_HW_INIT;
+	idv->graphics_state.comp_state = GFX_DETECTED;
+	idv->me_state.comp_state = ME_MEI_INT_READY;
+
+	/* FIXME: both of these needed to push along the state machine */
+	idv->vendor_entries.reg_sensor_mode = TOUCH_SENSOR_MODE_RAW_DATA;
+	idv->hid_state.comp_state = HID_MULTI_TOUCH_READY;
+
+	ret = driver_state_handler(idv);
+	if(ret < 0) {
+		pr_err("Itouch: Failed to init driver\n");
 		goto err;
 	}
 
-	ret = sysfs_create_group(&dev->dev.kobj, &itouch_grp);
-	if(ret){
+	if(itouch_dbgfs_register(idv, "itouch"))
+		itouch_dbg(idv, "cannot register debugfs\n");
+
+	if(sysfs_create_group(&dev->dev.kobj, &itouch_grp))
 		pr_err("Itouch: Failed to create sysfs\n");
-	}
 
 	return 0;
+
 err:
 	if(idv)
 		kfree(idv);

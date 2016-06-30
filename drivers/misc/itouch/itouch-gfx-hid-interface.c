@@ -288,6 +288,9 @@ int itouch_open_gpu(struct itouch_device *idv)
 	idv->work_queue_item_size = WORK_QUEUE_ITEM_SIZE;
 
 	idv->graphics_state.comp_state = GFX_GPU_OPEN_COMPLETE;
+
+	schedule_delayed_work(&idv->reacquire_db_work, REACQUIRE_DB_WORK_DELAY*2);
+
 	return ret;
 }
 

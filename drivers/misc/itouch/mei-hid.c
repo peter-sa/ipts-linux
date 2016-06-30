@@ -216,15 +216,21 @@ int mei_hid_probe(struct itouch_device *idv)
 	hid->ll_driver = &mei_hid_ll_driver;
 	hid->dev.parent = &idv->mdv->dev;
 	hid->bus = BUS_MEI;
-	hid->version = idv->sensor_data.FwRev;
-	hid->vendor = idv->sensor_data.VendorId;
-	hid->product = idv->sensor_data.DeviceId;
+	hid->version = le32_to_cpu(idv->sensor_data.FwRev);
+	hid->vendor = le16_to_cpu(idv->sensor_data.VendorId);
+	hid->product = le16_to_cpu(idv->sensor_data.DeviceId);
 	snprintf(hid->phys, sizeof(hid->phys), "heci3");
 	snprintf(hid->name, sizeof(hid->name),
 		 "%s %04hX:%04hX", "itouch", hid->vendor, hid->product);
 
 	idv->device_touch_data = kzalloc(sizeof(hid_loopback_report), GFP_KERNEL);
+	if (!idv->device_touch_data) {
+		ret = -ENOMEM;
+		goto err_dev;
+	}
+
 	idv->hid = hid;
+
 	ret = hid_add_device(hid);
 	if (ret) {
 		if (ret != -ENODEV)
@@ -245,10 +251,6 @@ int mei_hid_probe(struct itouch_device *idv)
 		idv->vendor_entries.reg_sensor_mode = TOUCH_SENSOR_MODE_HID;
 		idv->hid_state.comp_state = HID_SINGLE_TOUCH_READY;
 	}
-
-	idv->driver_state.comp_state = DRIVER_HW_INIT;
-	idv->graphics_state.comp_state = GFX_DETECTED;
-	idv->me_state.comp_state = ME_MEI_INT_READY;
 
 	return 0;
 
