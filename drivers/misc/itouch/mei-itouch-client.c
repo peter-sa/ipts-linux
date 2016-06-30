@@ -176,6 +176,8 @@ void reacquire_guc_db(struct work_struct *work)
 	struct itouch_device *idv = container_of(to_delayed_work(work),
 			struct itouch_device, reacquire_db_work);
 
+	BUG_ON(idv->appPrcocessParams == NULL);
+
 	head = idv->appPrcocessParams->head;
 	tail = idv->appPrcocessParams->tail;
 
