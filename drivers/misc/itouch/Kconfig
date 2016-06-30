@@ -1,7 +1,7 @@
 config INTEL_MEI_ITOUCH
 	tristate "Intel Integrated Touch with ME Interface"
-	select INTEL_MEI
-	depends on X86 && PCI && WATCHDOG_CORE && HID
+	select INTEL_MEI_ME
+	depends on X86 && PCI && DRM_I915 && HID
 	help
 	  MEI Support for Intel Integrated Touch device on Intel SoCs
 	  Supported SoCs:
