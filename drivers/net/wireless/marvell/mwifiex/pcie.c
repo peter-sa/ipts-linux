@@ -1608,6 +1608,7 @@ static int mwifiex_pcie_process_cmd_complete(struct mwifiex_adapter *adapter)
 
 	pkt_len = *((__le16 *)skb->data);
 	rx_len = le16_to_cpu(pkt_len);
+	skb_put(skb, MWIFIEX_UPLD_SIZE - skb->len);
 	skb_trim(skb, rx_len);
 	skb_pull(skb, INTF_HEADER_LEN);
 
@@ -2182,6 +2183,7 @@ exit:
  */
 static int mwifiex_process_pcie_int(struct mwifiex_adapter *adapter)
 {
+	struct pcie_service_card *card = adapter->card;
 	int ret;
 	u32 pcie_ireg;
 	unsigned long flags;
@@ -2249,6 +2251,12 @@ static int mwifiex_process_pcie_int(struct mwifiex_adapter *adapter)
 				}
 			}
 
+		}
+		if (!card->msi_enable) {
+			spin_lock_irqsave(&adapter->int_lock, flags);
+			pcie_ireg |= adapter->int_status;
+			adapter->int_status = 0;
+			spin_unlock_irqrestore(&adapter->int_lock, flags);
 		}
 	}
 	mwifiex_dbg(adapter, INTR,
